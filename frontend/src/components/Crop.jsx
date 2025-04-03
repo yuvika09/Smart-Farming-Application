@@ -1,17 +1,19 @@
 import { useState } from "react";
-import axios from 'axios';
+import axios from "axios";
 
 const Crop = () => {
   const [formData, setFormData] = useState({
-    nitrogen: "",
-    phosphorus: "",
-    potassium: "",
-    ph: "",
-    temperature: "",
-    humidity: "",
-    rainfall: "",
+    Nitrogen: "",
+    Phosphorous: "",
+    Potassium: "",
+    Temperature: "",
+    Humidity: "",
+    PH: "",
+    Rainfall: "",
   });
-  const [submittedData, setSubmittedData] = useState(null);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -21,215 +23,384 @@ const Crop = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmittedData({ ...formData });
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.post(
+        "http://127.0.0.1:8000/predict",
+        formData
+      );
+      setResult(response.data);
+    } catch (err) {
+      setError(
+        err.response?.data?.error || "Failed to get crop recommendation"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
     setFormData({
-      nitrogen: "",
-      phosphorus: "",
-      potassium: "",
-      ph: "",
-      temperature: "",
-      humidity: "",
-      rainfall: "",
+      Nitrogen: "",
+      Phosphorous: "",
+      Potassium: "",
+      Temperature: "",
+      Humidity: "",
+      PH: "",
+      Rainfall: "",
     });
-    setSubmittedData(null);
+    setResult(null);
+    setError(null);
+  };
+
+  // Helper functions to match your backend classification
+  const getLevel = (value, type) => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return "";
+
+    switch (type) {
+      case "N":
+        if (num <= 50) return "Less";
+        if (num <= 100) return "Not too less and Not too High";
+        return "High";
+      case "P":
+        if (num <= 50) return "Less";
+        if (num <= 100) return "Not too less and Not too High";
+        return "High";
+      case "K":
+        if (num <= 50) return "Less";
+        if (num <= 100) return "Not too less and Not too High";
+        return "High";
+      case "humidity":
+        if (num <= 33) return "Low Humid";
+        if (num <= 66) return "Medium Humid";
+        return "High Humid";
+      case "temperature":
+        if (num <= 6) return "Cool";
+        if (num <= 25) return "Warm";
+        return "Hot";
+      case "rainfall":
+        if (num <= 100) return "Less";
+        if (num <= 200) return "Moderate";
+        return "Heavy Rain";
+      case "ph":
+        if (num <= 5) return "Acidic";
+        if (num <= 8) return "Neutral";
+        return "Alkaline";
+      default:
+        return "";
+    }
   };
 
   return (
-    <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg shadow-xl mt-10">
-      <h2 className="text-2xl font-bold text-black-800 mb-6">
-        Soil and Climate Input
-      </h2>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 py-8 px-4">
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
+        <h1 className="text-3xl font-bold text-center text-green-800 mb-8">
+          Crop Recommendation System
+        </h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Soil Nutrients */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-black-700">
-              Soil Nutrients (mg/kg)
-            </h3>
-            <div>
-              <label className="block text-gray-700 mb-1">Nitrogen (N)</label>
-              <input
-                type="number"
-                name="nitrogen"
-                value={formData.nitrogen}
-                onChange={handleChange}
-                className="w-full p-2 border rounded-lg"
-                placeholder="e.g. 90"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 mb-1">Phosphorus (P)</label>
-              <input
-                type="number"
-                name="phosphorus"
-                value={formData.phosphorus}
-                onChange={handleChange}
-                className="w-full p-2 border rounded-lg"
-                placeholder="e.g. 42"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 mb-1">Potassium (K)</label>
-              <input
-                type="number"
-                name="potassium"
-                value={formData.potassium}
-                onChange={handleChange}
-                className="w-full p-2 border rounded-lg"
-                placeholder="e.g. 43"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 mb-1">Soil pH</label>
-              <input
-                type="number"
-                name="ph"
-                value={formData.ph}
-                onChange={handleChange}
-                min="0"
-                max="14"
-                step="0.1"
-                className="w-full p-2 border rounded-lg"
-                placeholder="e.g. 6.5"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Climate Factors */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-black-700">
-              Climate Factors
-            </h3>
-            <div>
-              <label className="block text-gray-700 mb-1">
-                Temperature (°C)
-              </label>
-              <input
-                type="number"
-                name="temperature"
-                value={formData.temperature}
-                onChange={handleChange}
-                className="w-full p-2 border rounded-lg"
-                placeholder="e.g. 25.5"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 mb-1">Humidity (%)</label>
-              <input
-                type="number"
-                name="humidity"
-                value={formData.humidity}
-                onChange={handleChange}
-                min="0"
-                max="100"
-                className="w-full p-2 border rounded-lg"
-                placeholder="e.g. 80"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 mb-1">Rainfall (mm)</label>
-              <input
-                type="number"
-                name="rainfall"
-                value={formData.rainfall}
-                onChange={handleChange}
-                min="0"
-                className="w-full p-2 border rounded-lg"
-                placeholder="e.g. 200"
-                required
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex space-x-4">
-          <button
-            type="submit"
-            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Submit Data
-          </button>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors"
-          >
-            Reset
-          </button>
-        </div>
-      </form>
-
-      {submittedData && (
-        <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold text-green-800 mb-4">
-            Submitted Soil and Climate Data
-          </h3>
-
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="text-lg font-semibold mb-3">Soil Nutrients</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Nitrogen (N):</span>
-                  <span className="font-medium">
-                    {submittedData.nitrogen} mg/kg
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Phosphorus (P):</span>
-                  <span className="font-medium">
-                    {submittedData.phosphorus} mg/kg
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Potassium (K):</span>
-                  <span className="font-medium">
-                    {submittedData.potassium} mg/kg
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Soil pH:</span>
-                  <span className="font-medium">{submittedData.ph}</span>
-                </div>
+            {/* Soil Nutrients Column */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-green-700 border-b pb-2">
+                Soil Nutrients (mg/kg)
+              </h2>
+
+              <div>
+                <label className="block text-gray-700 mb-1">Nitrogen (N)</label>
+                <input
+                  type="number"
+                  name="Nitrogen"
+                  value={formData.Nitrogen}
+                  onChange={handleChange}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="e.g. 90"
+                  required
+                  min="0"
+                />
+                {formData.Nitrogen && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Level: {getLevel(formData.Nitrogen, "N")}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-1">
+                  Phosphorous (P)
+                </label>
+                <input
+                  type="number"
+                  name="Phosphorous"
+                  value={formData.Phosphorous}
+                  onChange={handleChange}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="e.g. 42"
+                  required
+                  min="0"
+                />
+                {formData.Phosphorous && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Level: {getLevel(formData.Phosphorous, "P")}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-1">
+                  Potassium (K)
+                </label>
+                <input
+                  type="number"
+                  name="Potassium"
+                  value={formData.Potassium}
+                  onChange={handleChange}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="e.g. 43"
+                  required
+                  min="0"
+                />
+                {formData.Potassium && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Level: {getLevel(formData.Potassium, "K")}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-1">Soil pH</label>
+                <input
+                  type="number"
+                  name="PH"
+                  value={formData.PH}
+                  onChange={handleChange}
+                  step="0.1"
+                  min="0"
+                  max="14"
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="e.g. 6.5"
+                  required
+                />
+                {formData.PH && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Level: {getLevel(formData.PH, "ph")}
+                  </p>
+                )}
               </div>
             </div>
 
-            <div>
-              <h4 className="text-lg font-semibold mb-3">Climate Factors</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Temperature:</span>
-                  <span className="font-medium">
-                    {submittedData.temperature} °C
+            {/* Climate Factors Column */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-green-700 border-b pb-2">
+                Climate Factors
+              </h2>
+
+              <div>
+                <label className="block text-gray-700 mb-1">
+                  Temperature (°C)
+                </label>
+                <input
+                  type="number"
+                  name="Temperature"
+                  value={formData.Temperature}
+                  onChange={handleChange}
+                  step="0.1"
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="e.g. 25.5"
+                  required
+                />
+                {formData.Temperature && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Level: {getLevel(formData.Temperature, "temperature")}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-1">Humidity (%)</label>
+                <input
+                  type="number"
+                  name="Humidity"
+                  value={formData.Humidity}
+                  onChange={handleChange}
+                  min="0"
+                  max="100"
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="e.g. 80"
+                  required
+                />
+                {formData.Humidity && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Level: {getLevel(formData.Humidity, "humidity")}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-1">
+                  Rainfall (mm)
+                </label>
+                <input
+                  type="number"
+                  name="Rainfall"
+                  value={formData.Rainfall}
+                  onChange={handleChange}
+                  min="0"
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="e.g. 200"
+                  required
+                />
+                {formData.Rainfall && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Level: {getLevel(formData.Rainfall, "rainfall")}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-center space-x-4 pt-4">
+            <button
+              type="submit"
+              className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400 font-medium"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="inline-block mr-2">
+                    <svg
+                      className="animate-spin h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
                   </span>
+                  Processing...
+                </>
+              ) : (
+                "Get Recommendation"
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="px-8 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+            >
+              Reset
+            </button>
+          </div>
+        </form>
+
+        {error && (
+          <div className="mt-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+            <p className="font-medium">Error:</p>
+            <p>{error}</p>
+          </div>
+        )}
+
+        {result && (
+          <div className="mt-8 bg-green-50 rounded-xl p-6 border border-green-200">
+            <h2 className="text-2xl font-bold text-green-800 mb-4 text-center">
+              Recommended Crop
+            </h2>
+
+            <div className="text-center mb-6">
+              <div className="inline-block bg-white p-6 rounded-full shadow-md">
+                <span className="text-5xl">🌾</span>
+              </div>
+              <h3 className="text-3xl font-bold text-green-700 mt-4">
+                {result.cropName}
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-xl font-semibold text-green-700 mb-3 border-b pb-2">
+                  Soil Parameters
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Nitrogen (N):</span>
+                    <span className="font-medium">
+                      {result.values[0]} mg/kg{" "}
+                      <span className="text-gray-500">({result.cont[0]})</span>
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Phosphorous (P):</span>
+                    <span className="font-medium">
+                      {result.values[1]} mg/kg{" "}
+                      <span className="text-gray-500">({result.cont[1]})</span>
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Potassium (K):</span>
+                    <span className="font-medium">
+                      {result.values[2]} mg/kg{" "}
+                      <span className="text-gray-500">({result.cont[2]})</span>
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Soil pH:</span>
+                    <span className="font-medium">
+                      {result.values[6]}{" "}
+                      <span className="text-gray-500">({result.cont[6]})</span>
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Humidity:</span>
-                  <span className="font-medium">{submittedData.humidity}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Rainfall:</span>
-                  <span className="font-medium">
-                    {submittedData.rainfall} mm
-                  </span>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold text-green-700 mb-3 border-b pb-2">
+                  Climate Parameters
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Temperature:</span>
+                    <span className="font-medium">
+                      {result.values[4]}°C{" "}
+                      <span className="text-gray-500">({result.cont[4]})</span>
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Humidity:</span>
+                    <span className="font-medium">
+                      {result.values[3]}%{" "}
+                      <span className="text-gray-500">({result.cont[3]})</span>
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Rainfall:</span>
+                    <span className="font-medium">
+                      {result.values[5]} mm{" "}
+                      <span className="text-gray-500">({result.cont[5]})</span>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
