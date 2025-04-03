@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prediction Result</title>
+</head>
+<body>
+    <h2>Recommended Crop</h2>
+    <p><strong>Crop:</strong> {{ cropName }}</p>
+    <h3>Details:</h3>
+    <ul>
+        {% for detail in cont %}
+            <li>{{ detail }}</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'recommendation:home' %}">Go Back</a>
+</body>
+</html>
