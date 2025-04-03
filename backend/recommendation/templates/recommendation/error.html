@@ -1,0 +1,10 @@
+{% extends 'recommendation/base.html' %}
+
+{% block content %}
+<div class="alert alert-danger">
+    <h2>Error</h2>
+    <p>{{ error }}</p>
+    <p>{{ recommendation }}</p>
+    <a href="{% url 'index' %}" class="btn btn-primary">Try Again</a>
+</div>
+{% endblock %}
