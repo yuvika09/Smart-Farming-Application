@@ -28,20 +28,31 @@ const Crop = () => {
     setLoading(true);
     setError(null);
 
+    // Check for missing values
+    for (const key in formData) {
+      if (!formData[key]) {
+        setError(`Please enter a value for ${key}`);
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
-      const response = await axios.post(
-        "http://127.0.0.1:8000/predict",
-        formData
-      );
+      console.log("FormData before sending:", formData);
+      const response = await axios.post("http://127.0.0.1:8000/predict/", formData, {
+        headers: { "Content-Type": "application/json" }
+      });
+
+      console.log("Server Response:", response.data);
+
       setResult(response.data);
     } catch (err) {
-      setError(
-        err.response?.data?.error || "Failed to get crop recommendation"
-      );
+      setError(err.response?.data?.error || "Failed to get crop recommendation");
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleReset = () => {
     setFormData({
@@ -330,73 +341,6 @@ const Crop = () => {
               <h3 className="text-3xl font-bold text-green-700 mt-4">
                 {result.cropName}
               </h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-xl font-semibold text-green-700 mb-3 border-b pb-2">
-                  Soil Parameters
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-700">Nitrogen (N):</span>
-                    <span className="font-medium">
-                      {result.values[0]} mg/kg{" "}
-                      <span className="text-gray-500">({result.cont[0]})</span>
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-700">Phosphorous (P):</span>
-                    <span className="font-medium">
-                      {result.values[1]} mg/kg{" "}
-                      <span className="text-gray-500">({result.cont[1]})</span>
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-700">Potassium (K):</span>
-                    <span className="font-medium">
-                      {result.values[2]} mg/kg{" "}
-                      <span className="text-gray-500">({result.cont[2]})</span>
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-700">Soil pH:</span>
-                    <span className="font-medium">
-                      {result.values[6]}{" "}
-                      <span className="text-gray-500">({result.cont[6]})</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-semibold text-green-700 mb-3 border-b pb-2">
-                  Climate Parameters
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-700">Temperature:</span>
-                    <span className="font-medium">
-                      {result.values[4]}°C{" "}
-                      <span className="text-gray-500">({result.cont[4]})</span>
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-700">Humidity:</span>
-                    <span className="font-medium">
-                      {result.values[3]}%{" "}
-                      <span className="text-gray-500">({result.cont[3]})</span>
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-700">Rainfall:</span>
-                    <span className="font-medium">
-                      {result.values[5]} mm{" "}
-                      <span className="text-gray-500">({result.cont[5]})</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
