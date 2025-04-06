@@ -1,17 +1,28 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const isHomePage = window.location.pathname === '/';
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState('');
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const storedUsername = localStorage.getItem('username');
+    
+    if (token && storedUsername) {
+      setIsLoggedIn(true);
+      setUsername(storedUsername);
+    }
+  }, []);
 
   const handleRecommendClick = (e) => {
     if (!isHomePage) {
-      // If not on home page, navigate to home first
       e.preventDefault();
       navigate('/');
       
-      // Scroll after the home page loads
       setTimeout(() => {
         const element = document.getElementById('crop-recommendation');
         if (element) {
@@ -19,7 +30,31 @@ const Navbar = () => {
         }
       }, 100);
     }
-    // If already on home page, let the default hash behavior handle the scroll
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Call your backend logout endpoint if you have one
+      // await fetch("http://localhost:8000/api/users/logout/", {
+      //   method: "POST",
+      //   headers: {
+      //     "Authorization": `Token ${localStorage.getItem('token')}`,
+      //   },
+      // });
+
+      // Clear local storage
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      
+      // Update state
+      setIsLoggedIn(false);
+      setUsername('');
+      
+      // Redirect to home page
+      navigate('/');
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   return (
@@ -42,20 +77,34 @@ const Navbar = () => {
           </Link>
         </div>
 
-        {/* Right Side: Login and Signup Buttons */}
-        <div className="flex space-x-4">
-          <Link
-            to="/login"
-            className="bg-white text-green-600 px-3 py-2 rounded hover:bg-green-200 text-lg"
-          >
-            Login
-          </Link>
-          <Link
-            to="/signup"
-            className="bg-white text-green-600 px-3 py-2 rounded hover:bg-green-200 text-lg"
-          >
-            Signup
-          </Link>
+        {/* Right Side: Login/Signup or User Greeting */}
+        <div className="flex space-x-4 items-center">
+          {isLoggedIn ? (
+            <>
+              <span className="text-white text-xl">Hi, {username}</span>
+              <button
+                onClick={handleLogout}
+                className="bg-white text-green-600 px-3 py-2 rounded hover:bg-green-200 text-lg"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="bg-white text-green-600 px-3 py-2 rounded hover:bg-green-200 text-lg"
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="bg-white text-green-600 px-3 py-2 rounded hover:bg-green-200 text-lg"
+              >
+                Signup
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
