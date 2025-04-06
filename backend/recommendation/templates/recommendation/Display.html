@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Crop Prediction Result{% endblock %}
+
+{% block body %}
+<div style="margin-top:30vh">
+    <table>
+        <tr>
+            <th>N Level (kg/hectare)</th>
+            <th>P Level (kg/hectare)</th>
+            <th>K Level (kg/hectare)</th>
+            <th>Humidity (%)</th>
+            <th>Temperature (°C)</th>
+            <th>Rainfall (mm)</th>
+            <th>pH</th>
+        </tr>
+        <tr>
+            {% for i in values %}
+            <td>{{ i }}</td>
+            {% endfor %}
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <th>Nitrogen Level</th>
+            <th>Phosphorous Level</th>
+            <th>Potassium Level</th>
+            <th>Humidity</th>
+            <th>Temperature</th>
+            <th>Rainfall</th>
+            <th>pH Level</th>
+        </tr>
+        <tr>
+            {% for i in cont %}
+            <td>{{ i }}</td>
+            {% endfor %}
+        </tr>
+    </table>
+    <h1 style="text-shadow: 3px 3px 3px violet;">
+        Best crop to grow in this condition is {{ crop_name }}
+    </h1>
+    <a href="{% url 'home' %}" style="color: white; text-decoration: none; margin-top: 20px; display: inline-block;">
+        Make Another Prediction
+    </a>
+</div>
+{% endblock %}

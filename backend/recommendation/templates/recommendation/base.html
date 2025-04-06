@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <style>
+        body {
+            height: 100vh;
+            background-color: black;
+            color: white;
+            text-align: center;
+            font-size: 1.4em;
+        }
+        
+        table {
+            display: flex;
+            border-collapse: collapse;
+            margin: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        td, th {
+            border: 1px solid red;
+            padding: 10px;
+            width: auto;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+
+</head>
+<body>
+    {% block body %}
+    <a href="{% url 'recommendation:home' %}">Home</a>
+<a href="{% url 'recommendation:predict' %}">Predict</a>
+    {% endblock %}
+</body>
+</html>
