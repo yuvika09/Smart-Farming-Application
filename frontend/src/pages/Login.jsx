@@ -2,17 +2,17 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!email || !password) {
+  
+    if (!username || !password) {
       alert("Please fill in all fields.");
       return;
     }
-
+  
     try {
       const response = await fetch("http://localhost:8000/api/users/login/", {
         method: "POST",
@@ -20,28 +20,35 @@ const Login = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: email,
+          username: username,
           password: password,
         }),
       });
-
-      const data = await response.json();
-
+  
+      const text = await response.text(); // Read once here
+  
+      let data;
+      try {
+        data = JSON.parse(text); // Try to parse
+      } catch (parseErr) {
+        console.error("Could not parse response as JSON. Raw response:", text);
+        throw new Error("Non-JSON response from server");
+      }
+  
+      console.log("Parsed response:", data);
+  
       if (response.ok) {
-        // Store the authentication token and username
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("username", data.username);
-
-        // Redirect to home page
+        localStorage.setItem("username", data.user.username);
         window.location.href = "/";
       } else {
-        alert(`Login failed: ${data.message || "Invalid credentials"}`);
+        alert(`Login failed: ${data.error || "Invalid credentials"}`);
       }
     } catch (error) {
       console.error("Login error:", error);
       alert("An error occurred. Please try again later.");
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -49,24 +56,21 @@ const Login = () => {
         <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-2" htmlFor="email">
-              Email
+            <label className="block text-sm font-medium mb-2" htmlFor="username">
+              Username
             </label>
             <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full p-2 border rounded-lg"
-              placeholder="Enter your email"
+              placeholder="Enter your username"
               required
             />
           </div>
           <div className="mb-6">
-            <label
-              className="block text-sm font-medium mb-2"
-              htmlFor="password"
-            >
+            <label className="block text-sm font-medium mb-2" htmlFor="password">
               Password
             </label>
             <input
