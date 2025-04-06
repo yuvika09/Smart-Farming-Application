@@ -5,6 +5,9 @@ import pandas as pd
 from django.conf import settings
 from django.shortcuts import render
 from sklearn.preprocessing import StandardScaler, LabelEncoder
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 # Load the pre-trained model
 model_path = os.path.join(settings.BASE_DIR, 'recommendation', 'models', 'KNN_model.pkl')
@@ -25,18 +28,28 @@ scaler.fit(X)  # Fit the scaler to dataset features
 def home(request):
     return render(request, 'recommendation/index.html')
 
-
+@csrf_exempt
 def predict(request):
     if request.method == 'POST':
         try:
-            # Get form input values
-            N = float(request.POST.get('Nitrogen'))
-            P = float(request.POST.get('Phosphorous'))
-            K = float(request.POST.get('Potassium'))
-            Temperature = float(request.POST.get('Temperature'))
-            Humidity = float(request.POST.get('Humidity'))
-            PH = float(request.POST.get('PH'))
-            Rainfall = float(request.POST.get('Rainfall'))
+            print("Received Data:", request.body)
+            # Ensure we have valid inputs (use 0 as default if missing)
+            # Ensure JSON parsing
+            data = json.loads(request.body)
+            print("Parsed Data:", data)  # Check parsed values
+
+            N = float(data.get('Nitrogen', 0))
+            P = float(data.get('Phosphorous', 0))
+            K = float(data.get('Potassium', 0))
+            Temperature = float(data.get('Temperature', 0))
+            Humidity = float(data.get('Humidity', 0))
+            PH = float(data.get('PH', 0))
+            Rainfall = float(data.get('Rainfall', 0))
+
+            # Validate inputs (optional)
+            inputs = [N, P, K, Temperature, Humidity, PH, Rainfall]
+            if any(value is None for value in inputs):
+                return JsonResponse({'error': 'Missing input values'}, status=400)
 
             # Transform input using the fitted scaler
             input_data = np.array([N, P, K, Temperature, Humidity, PH, Rainfall]).reshape(1, -1)
@@ -55,11 +68,10 @@ def predict(request):
                 15: 'Muskmelon(खरबूजा)', 16: 'Orange(संतरा)', 17: 'Papaya(पपीता)',
                 18: 'Pigeonpeas(कबूतर के मटर)', 19: 'Pomegranate(अनार)', 20: 'Rice(चावल)',
                 21: 'Watermelon(तरबूज)'
-            }
+            }  # Keep your existing crop mapping
             crop_name = crop_mapping.get(predict1, "Unknown Crop")
 
-            # Create context for rendering
-            context = {
+            response_data = {
                 'cropName': crop_name,
                 'values': [N, P, K, Humidity, Temperature, Rainfall, PH],
                 'cont': [
@@ -72,13 +84,16 @@ def predict(request):
                     get_ph_level(PH)
                 ]
             }
-            print("Context Data:", context)
-            return render(request, 'recommendation/result.html', context)
+            print('Response',response_data)
+            return JsonResponse(response_data, safe=False)
+
+        except ValueError:
+            return JsonResponse({'error': 'Invalid input: Please enter numeric values'}, status=400)
 
         except Exception as e:
-            return render(request, 'recommendation/error.html', {'error': str(e)})
+            return JsonResponse({'error': str(e)}, status=400)
 
-    return render(request, 'recommendation/result.html')
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 
 # Helper functions for classification levels
