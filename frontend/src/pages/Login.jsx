@@ -1,19 +1,46 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Frontend validation
+
     if (!email || !password) {
-      alert('Please fill in all fields.');
+      alert("Please fill in all fields.");
       return;
     }
-    // Simulate login (no backend)
-    alert(`Logged in with Email: ${email}`);
+
+    try {
+      const response = await fetch("http://localhost:8000/api/users/login/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store the authentication token and username
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("username", data.username);
+
+        // Redirect to home page
+        window.location.href = "/";
+      } else {
+        alert(`Login failed: ${data.message || "Invalid credentials"}`);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("An error occurred. Please try again later.");
+    }
   };
 
   return (
@@ -36,7 +63,10 @@ const Login = () => {
             />
           </div>
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-2" htmlFor="password">
+            <label
+              className="block text-sm font-medium mb-2"
+              htmlFor="password"
+            >
               Password
             </label>
             <input
@@ -57,7 +87,7 @@ const Login = () => {
           </button>
         </form>
         <p className="mt-4 text-center">
-          Don't have an account?{' '}
+          Don't have an account?{" "}
           <Link to="/signup" className="text-green-600 hover:underline">
             Sign up
           </Link>
