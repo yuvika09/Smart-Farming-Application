@@ -14,14 +14,17 @@ class SignupView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
 class LoginView(APIView):
     def post(self, request):
         print("Login request data:", request.data)
 
+
         username = request.data.get("username")
         password = request.data.get("password")
+        print("Username:", username)
+        print("Password:", password)
+        # print("User from DB:", user)
+        # print("Password correct:", user.check_password(password))
 
         if not username or not password:
             return Response({"error": "Username and password are required."}, status=status.HTTP_400_BAD_REQUEST)

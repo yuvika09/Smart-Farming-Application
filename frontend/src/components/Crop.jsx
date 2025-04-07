@@ -4,7 +4,9 @@ import { useNavigate } from "react-router-dom";
 
 const Crop = () => {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!localStorage.getItem("username")
+  );
   const [formData, setFormData] = useState({
     Nitrogen: "",
     Phosphorous: "",
@@ -60,12 +62,18 @@ const Crop = () => {
     }
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/predict/", formData, {
-        headers: { "Content-Type": "application/json" }
-      });
+      const response = await axios.post(
+        "http://127.0.0.1:8000/predict/",
+        formData,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
       setResult(response.data);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to get crop recommendation");
+      setError(
+        err.response?.data?.error || "Failed to get crop recommendation"
+      );
     } finally {
       setLoading(false);
     }
@@ -146,7 +154,9 @@ const Crop = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-1">Phosphorous (P)</label>
+                <label className="block text-gray-700 mb-1">
+                  Phosphorous (P)
+                </label>
                 <input
                   type="number"
                   name="Phosphorous"
@@ -160,7 +170,9 @@ const Crop = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-1">Potassium (K)</label>
+                <label className="block text-gray-700 mb-1">
+                  Potassium (K)
+                </label>
                 <input
                   type="number"
                   name="Potassium"
@@ -196,7 +208,9 @@ const Crop = () => {
               </h2>
 
               <div>
-                <label className="block text-gray-700 mb-1">Temperature (°C)</label>
+                <label className="block text-gray-700 mb-1">
+                  Temperature (°C)
+                </label>
                 <input
                   type="number"
                   name="Temperature"
@@ -225,7 +239,9 @@ const Crop = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-1">Rainfall (mm)</label>
+                <label className="block text-gray-700 mb-1">
+                  Rainfall (mm)
+                </label>
                 <input
                   type="number"
                   name="Rainfall"
