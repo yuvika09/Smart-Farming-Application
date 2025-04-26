@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from .models import CropRecommendation
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,4 +17,9 @@ class UserSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         return user
+
+class CropRecommendationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CropRecommendation
+        fields = '__all__'
 
