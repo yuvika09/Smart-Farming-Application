@@ -6,7 +6,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
- // In your Login.jsx handleSubmit:
 const handleSubmit = async (e) => {
   e.preventDefault();
   setError("");
@@ -34,10 +33,8 @@ const handleSubmit = async (e) => {
       throw new Error(data.error || "Login failed");
     }
 
-    // Store both user data AND a token flag
     localStorage.setItem("username", data.user.username);
-    localStorage.setItem("token", "true"); // Simple flag to indicate authenticated
-    // ... other user data if needed
+    localStorage.setItem("token", "true"); 
 
     window.location.href = "/";
   } catch (error) {
