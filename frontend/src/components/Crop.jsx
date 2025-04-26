@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import CropTips from "./CropTips";
+import { cropTips } from "./CropTipsData";
 
 const Crop = () => {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!localStorage.getItem("username")
+  );
   const [formData, setFormData] = useState({
     Nitrogen: "",
-    Phosphorous: "",
+    Phosphorus: "",
     Potassium: "",
     Temperature: "",
     Humidity: "",
@@ -60,12 +64,49 @@ const Crop = () => {
     }
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/predict/", formData, {
-        headers: { "Content-Type": "application/json" }
-      });
+      // 1. Get crop recommendation
+      const response = await axios.post(
+        "http://127.0.0.1:8000/predict/",
+        formData,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      const cropName = response.data.cropName;
       setResult(response.data);
+
+      // 2. Prepare data for saving
+      const now = new Date();
+      const date = now.toISOString().split("T")[0]; // YYYY-MM-DD
+      const time = now.toTimeString().split(" ")[0]; // HH:MM:SS
+
+      const saveData = {
+        date,
+        time,
+        nitrogen: formData.Nitrogen,
+        phosphorus: formData.Phosphorus,
+        potassium: formData.Potassium,
+        soil_ph: formData.PH,
+        temperature: formData.Temperature,
+        humidity: formData.Humidity,
+        rainfall: formData.Rainfall,
+        recommended_crop: cropName,
+      };
+
+      // 3. Save user input + recommendation
+      await axios.post(
+        "http://127.0.0.1:8000/api/users/save-input/",
+        saveData,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to get crop recommendation");
+      console.error("Error:", err.response?.data); // Log the full error
+      setError(
+        err.response?.data?.error || "Failed to get or save crop recommendation"
+      );
     } finally {
       setLoading(false);
     }
@@ -74,7 +115,7 @@ const Crop = () => {
   const handleReset = () => {
     setFormData({
       Nitrogen: "",
-      Phosphorous: "",
+      Phosphorus: "",
       Potassium: "",
       Temperature: "",
       Humidity: "",
@@ -146,11 +187,13 @@ const Crop = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-1">Phosphorous (P)</label>
+                <label className="block text-gray-700 mb-1">
+                  Phosphorus (P)
+                </label>
                 <input
                   type="number"
-                  name="Phosphorous"
-                  value={formData.Phosphorous}
+                  name="Phosphorus"
+                  value={formData.Phosphorus}
                   onChange={handleChange}
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="e.g. 42"
@@ -160,7 +203,9 @@ const Crop = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-1">Potassium (K)</label>
+                <label className="block text-gray-700 mb-1">
+                  Potassium (K)
+                </label>
                 <input
                   type="number"
                   name="Potassium"
@@ -196,7 +241,9 @@ const Crop = () => {
               </h2>
 
               <div>
-                <label className="block text-gray-700 mb-1">Temperature (°C)</label>
+                <label className="block text-gray-700 mb-1">
+                  Temperature (°C)
+                </label>
                 <input
                   type="number"
                   name="Temperature"
@@ -225,7 +272,9 @@ const Crop = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-1">Rainfall (mm)</label>
+                <label className="block text-gray-700 mb-1">
+                  Rainfall (mm)
+                </label>
                 <input
                   type="number"
                   name="Rainfall"
@@ -294,19 +343,52 @@ const Crop = () => {
         )}
 
         {result && (
-          <div className="mt-8 bg-green-50 rounded-xl p-6 border border-green-200">
-            <h2 className="text-2xl font-bold text-green-800 mb-4 text-center">
-              Recommended Crop
-            </h2>
-            <div className="text-center mb-6">
-              <div className="inline-block bg-white p-6 rounded-full shadow-md">
-                <span className="text-5xl">🌾</span>
+          <>
+            <div className="mt-8 bg-green-50 rounded-2xl shadow-lg p-8 border border-green-200">
+              {/* Header - Perfect match to CropTips */}
+              <h2 className="text-3xl font-extrabold text-green-800 mb-8 text-center tracking-wide">
+                🌱 Recommended Crop
+              </h2>
+
+              {/* Content Card - Mirroring CropTips' structure */}
+              <div className="bg-white p-6 rounded-xl shadow-md border border-green-100">
+                <div className="flex flex-col md:flex-row items-center gap-8">
+                  {/* Icon Circle */}
+                  <div className="bg-green-50 p-8 rounded-full border-2 border-green-100 flex-shrink-0">
+                    <span className="text-5xl">🌾</span>
+                  </div>
+
+                  {/* Details */}
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-800 capitalize mb-4">
+                      {result.cropName}
+                    </h3>
+
+                    <p className="text-gray-700 text-lg leading-relaxed mb-6">
+                      {cropTips[
+                        result.cropName.split("(")[0].trim().toLowerCase()
+                      ]?.reason ||
+                        "Ideal for your farming conditions with high yield potential."}
+                    </p>
+
+                    {/* Yield Badge - Enhanced version */}
+                    <div className="bg-green-100 px-5 py-3 rounded-lg border border-green-200 inline-flex items-center">
+                      <span className="w-3 h-3 bg-green-600 rounded-full mr-3"></span>
+                      <span className="font-semibold text-green-800">
+                        Estimated Yield:{" "}
+                        <span className="font-bold text-green-900">
+                          {cropTips[
+                            result.cropName.split("(")[0].trim().toLowerCase()
+                          ]?.estimatedYield || "High"}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-3xl font-bold text-green-700 mt-4">
-                {result.cropName}
-              </h3>
             </div>
-          </div>
+            <CropTips crop={result.cropName} />
+          </>
         )}
       </div>
     </div>
