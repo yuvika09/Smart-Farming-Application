@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.models import User
 from .serializers import UserSerializer
+from .models import CropRecommendation
+from .serializers import CropRecommendationSerializer
+import logging
 
 class SignupView(APIView):
     def post(self, request):
@@ -46,3 +49,26 @@ class LoginView(APIView):
             }, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+class SaveCropInputView(APIView):
+    def post(self, request, *args, **kwargs):
+        # Log incoming request data
+        logger.info("Received data: %s", request.data)
+        print("Received data:", request.data)   # Add this!
+
+        # Deserialize the incoming data
+        serializer = CropRecommendationSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            # Log success and save the data
+            logger.info("Saving data: %s", serializer.validated_data)
+            serializer.save()
+            return Response({"message": "Data saved successfully"}, status=status.HTTP_201_CREATED)
+        else:
+            # Log validation errors
+            logger.error("Validation failed: %s", serializer.errors)
+            print("Validation Errors:", serializer.errors)   # Add this!
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
